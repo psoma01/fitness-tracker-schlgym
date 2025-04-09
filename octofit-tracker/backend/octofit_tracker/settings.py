@@ -130,6 +130,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Enable CORS
 CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOWED_ORIGINS = [
+    'https://symmetrical-system-r4ww6jjrv9462pq5v-3000.app.github.dev',  # Frontend URL
+]
+
 CORS_ALLOW_METHODS = [
     "GET",
     "POST",
