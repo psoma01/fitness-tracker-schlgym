@@ -25,7 +25,7 @@ SECRET_KEY = "django-insecure-7@!2qgm*)rprqg=#$wzjz2v7ss5!@s*)fd_+7fwk1zjp)x-!#u
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'symmetrical-system-r4ww6jjrv9462pq5v-8000.app.github.dev']
 
 
 # Application definition
@@ -141,3 +141,6 @@ CORS_ALLOW_METHODS = [
 CORS_ALLOW_HEADERS = [
     "*",
 ]
+
+# Allow Django to use the X-Forwarded-Host header for determining the host
+USE_X_FORWARDED_HOST = True

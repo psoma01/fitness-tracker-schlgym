@@ -1,69 +1,63 @@
 from django.core.management.base import BaseCommand
 from octofit_tracker.models import User, Team, Activity, Leaderboard, Workout
-from django.conf import settings
-from pymongo import MongoClient
-from datetime import timedelta
+from octofit_tracker.test_data_content import test_data
 from bson import ObjectId
+from datetime import timedelta
 
 class Command(BaseCommand):
-    help = 'Populate the database with test data for users, teams, activity, leaderboard, and workouts'
+    help = 'Populate the database with test data for users, teams, activities, leaderboard, and workouts'
 
     def handle(self, *args, **kwargs):
-        # Connect to MongoDB
-        client = MongoClient(settings.DATABASES['default']['HOST'], settings.DATABASES['default']['PORT'])
-        db = client[settings.DATABASES['default']['NAME']]
+        # Clear existing data
+        User.objects.all().delete()
+        Team.objects.all().delete()
+        Activity.objects.all().delete()
+        Leaderboard.objects.all().delete()
+        Workout.objects.all().delete()
 
-        # Drop existing collections
-        db.users.drop()
-        db.teams.drop()
-        db.activity.drop()
-        db.leaderboard.drop()
-        db.workouts.drop()
+        # Populate users
+        users = {}
+        for user_data in test_data['users']:
+            user = User.objects.create(
+                _id=user_data['_id'],
+                username=user_data['username'],
+                email=user_data['email'],
+                password=user_data['password']
+            )
+            users[user_data['username']] = user
 
-        # Create users
-        users = [
-            User(_id=ObjectId(), username='thundergod', email='thundergod@mhigh.edu', password='thundergodpassword'),
-            User(_id=ObjectId(), username='metalgeek', email='metalgeek@mhigh.edu', password='metalgeekpassword'),
-            User(_id=ObjectId(), username='zerocool', email='zerocool@mhigh.edu', password='zerocoolpassword'),
-            User(_id=ObjectId(), username='crashoverride', email='crashoverride@hmhigh.edu', password='crashoverridepassword'),
-            User(_id=ObjectId(), username='sleeptoken', email='sleeptoken@mhigh.edu', password='sleeptokenpassword'),
-        ]
-        User.objects.bulk_create(users)
+        # Populate teams
+        for team_data in test_data['teams']:
+            team = Team.objects.create(
+                _id=team_data['_id'],
+                name=team_data['name']
+            )
+            team.members = list(users.values())
+            team.save()
 
-        # Create teams
-        team = Team(_id=ObjectId(), name='Blue Team')
-        team.save()
-        for user in users:
-            team.members.add(user)
+        # Populate activities
+        for activity_data in test_data['activities']:
+            Activity.objects.create(
+                _id=activity_data['_id'],
+                user=users[activity_data['user']],
+                activity_type=activity_data['activity_type'],
+                duration=activity_data['duration']
+            )
 
-        # Create activities
-        activities = [
-            Activity(_id=ObjectId(), user=users[0], activity_type='Cycling', duration=timedelta(hours=1)),
-            Activity(_id=ObjectId(), user=users[1], activity_type='Crossfit', duration=timedelta(hours=2)),
-            Activity(_id=ObjectId(), user=users[2], activity_type='Running', duration=timedelta(hours=1, minutes=30)),
-            Activity(_id=ObjectId(), user=users[3], activity_type='Strength', duration=timedelta(minutes=30)),
-            Activity(_id=ObjectId(), user=users[4], activity_type='Swimming', duration=timedelta(hours=1, minutes=15)),
-        ]
-        Activity.objects.bulk_create(activities)
+        # Populate leaderboard
+        for leaderboard_data in test_data['leaderboard']:
+            Leaderboard.objects.create(
+                _id=leaderboard_data['_id'],
+                user=users[leaderboard_data['user']],
+                score=leaderboard_data['score']
+            )
 
-        # Create leaderboard entries
-        leaderboard_entries = [
-            Leaderboard(_id=ObjectId(), user=users[0], score=100),
-            Leaderboard(_id=ObjectId(), user=users[1], score=90),
-            Leaderboard(_id=ObjectId(), user=users[2], score=95),
-            Leaderboard(_id=ObjectId(), user=users[3], score=85),
-            Leaderboard(_id=ObjectId(), user=users[4], score=80),
-        ]
-        Leaderboard.objects.bulk_create(leaderboard_entries)
-
-        # Create workouts
-        workouts = [
-            Workout(_id=ObjectId(), name='Cycling Training', description='Training for a road cycling event'),
-            Workout(_id=ObjectId(), name='Crossfit', description='Training for a crossfit competition'),
-            Workout(_id=ObjectId(), name='Running Training', description='Training for a marathon'),
-            Workout(_id=ObjectId(), name='Strength Training', description='Training for strength'),
-            Workout(_id=ObjectId(), name='Swimming Training', description='Training for a swimming competition'),
-        ]
-        Workout.objects.bulk_create(workouts)
+        # Populate workouts
+        for workout_data in test_data['workouts']:
+            Workout.objects.create(
+                _id=workout_data['_id'],
+                name=workout_data['name'],
+                description=workout_data['description']
+            )
 
         self.stdout.write(self.style.SUCCESS('Successfully populated the database with test data.'))
